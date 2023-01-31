@@ -46,10 +46,10 @@
    ```js
    // bundle.js
    // 아래 코드는 index.js 내에 있는 코드와 동일
-   const rootElement = document.getElementById("root");  // 1)
-   const root = createRoot(rootElement);                 // 2)
+   const rootElement = document.getElementById("root");  // a
+   const root = createRoot(rootElement);                 // b
  
-   root.render(<App />);                                 // 3)
+   root.render(<App />);                                 // c
    ```
   
    - 1) DOM에서 id가 'root'인 div태그를 찾는다
@@ -61,9 +61,8 @@
 ### 🔹 `useState()` 함수
 
 - React의 'state' system에 영향을 끼치는 함수
-- state는 변수처럼 data를 저장함
-- 다만, react에서의 state는 일반 변수와는 달리 시간에 따라 변화하는 data를 저장함
-- **state가 변하면 react는 자동으로 화면에 **content를 업데이트해줌**
+- state는 변수처럼 (시간에 따라 변화하는) data를 저장함
+- **state가 변하면 react는 자동으로 화면에 content를 업데이트해줌**
 
 ### 🔹 Translate App에서 language에 따라 text를 translate할 수 있었던 이유
 
