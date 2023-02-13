@@ -245,5 +245,6 @@
 ## ▶ 39. Last Bit of Styling
 
 > 자료: [015_-_pdas](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/3.Building_with_Reusable_Components/015_-_pdas)
-> 실습: 
+> 실습: [39. Last Bit of Styling](https://codesandbox.io/s/39-last-bit-of-styling-vie9r0?file=/src/App.js)
 
+- Bulma 라이브러리 중 Layout > Hero를 사용해서 제목을 만들어 줬음
