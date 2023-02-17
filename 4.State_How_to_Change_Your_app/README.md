@@ -13,7 +13,7 @@
 
 ## ▶ 41. Initial App Setup
 
-> 자료: [002_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/3.Building_with_Reusable_Components/002_-_pdas)
+> 자료: [002_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/4.State_How_to_Change_Your_App/002_-_animals)
 
 - src 폴더에 `index.js`, `App.js`, `AnimalShow.js`을 만들어야 함
   - `index.js`: 화면에 App 컴포넌트를 보여줌
@@ -29,7 +29,7 @@
 
 ## ▶ 42. Introducing the Event System
 
-> 자료: [003_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/3.Building_with_Reusable_Components/003_-_pdas)
+> 자료: [003_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/4.State_How_to_Change_Your_App/003_-_animals)
 
 - 'Add Animal' 버튼을 클릭할 때마다 동물 아이콘들이 나타나게 하는 대신, 숫자들이 증가하는 실습을 먼저 해보려 함
 - Event System: 사용자의 행동(클릭, 드래그 등)을 감지해서 반응함
@@ -90,7 +90,7 @@
 
 ## ▶ 44. Variations on Event Handlers
 
-> 자료: [005_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/3.Building_with_Reusable_Components/005_-_pdas)
+> 자료: [005_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/4.State_How_to_Change_Your_App/005_-_animals)
 
 - 위 설명처럼 이벤트를 사용할 때, 함수 뒤에 소괄호 `()`를 붙이면 안됨
   - 위 예제에서 버튼은 미래에 클릭됐을 때 비로소 함수를 호출하게 됨
@@ -113,7 +113,7 @@
 
 ## ▶ 46. Introducing the State System
 
-> 자료: [007_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/3.Building_with_Reusable_Components/007_-_pdas)
+> 자료: [007_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/4.State_How_to_Change_Your_App/007_-_animals)
 
 - State System: UI데이터가 변경될 때마다 화면에서 content를 update함 ⇒ `rerender`
 - 아래 예제에서 버튼을 클릭하면 화면이 rerendering 되어 숫자가 1씩 증가하는 것을 확인할 수 있음
@@ -217,7 +217,7 @@ const [count, setCount] = useState(0);
 
 ## ▶ 51. Picking a Random Element
 
-> 자료: [014_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/3.Building_with_Reusable_Components/014_-_pdas)
+> 자료: [014_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/4.State_How_to_Change_Your_App/014_-_animals)
 
 - 랜덤하게 동물을 선택하기 위해 `getRandomAnimal()` 함수를 만듦
   - 'bird', 'cat', 'cow', 'dog', 'gator', 'horse' 중 하나를 반환함
@@ -254,7 +254,7 @@ const [count, setCount] = useState(0);
 
 ## ▶ 52. List Building in React
 
-> 자료: [015_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/3.Building_with_Reusable_Components/015_-_pdas)
+> 자료: [015_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/4.State_How_to_Change_Your_App/015_-_animals)
 
 - 'animal' state에 있는 각 동물들을 AnimalShow component의 props로 전달하기 위해서 built-in function인 `map()`를 사용
   - `map()` 함수의 첫번째 인자로는 array의 각 요소가 차례대로 들어오고, 두번째 인자로는 index가 0부터 순서대로 들어옴
@@ -279,3 +279,201 @@ const [count, setCount] = useState(0);
      );
    }
    ```
+
+
+
+## ▶ 54. Loading and Showing SVGs
+
+> 자료: [016_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/4.State_How_to_Change_Your_App/016_-_animals)
+
+- img를 import할 때와 동일하게 svg도 import해 변수에 담음
+  - 아래 cat 변수에는 svg 파일 경로나 base64 string이 담겨있음
+  
+   ```js
+   import cat from './svg/cat.svg';
+   ```
+
+- object를 활용해 각 동물 type을 key로 두고, svg 파일 정보가 담긴 해당 변수를 value로 두었음
+  
+   ```js
+   const svgMap = {
+     bird,
+     cat,
+     cow,
+     dog,
+     gator,
+     horse,
+   };
+   ```
+
+- AnimalShow component에서 받은 type에 따라 이미지를 보여줌
+  
+   ```js
+   function AnimalShow({ type }) {
+     return (
+       <div>
+         <img alt="animal" src={svgMap[type]} />
+       </div>
+     );
+   }
+   ```
+
+
+
+## ▶ 55. Increasing Image Size
+
+> 자료: [017_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/4.State_How_to_Change_Your_App/017_-_animals)
+
+- 동물과 하트이미지 영역을 클릭할 때마다, 하트 크기가 증가해야 함
+  - Inline style을 사용해서 하트 이미지를 키울 수 있음
+  
+   ```js
+   import { useState } from 'react';
+ 
+   function AnimalShow({ type }) {
+     const [clicks, setClicks] = useState(0);
+ 
+     const handleClick = () => {
+       setClicks(clicks + 1);
+     };
+ 
+     return (
+       <div onClick={handleClick}>
+         <img alt="animal" src={svgMap[type]} />
+         <img alt="heart" src={heart} style={{ width: 10 + 10 * clicks + 'px' }} />
+       </div>
+     );
+   }
+   ```
+
+
+
+## ▶ 56. Adding Custom CSS
+
+> 자료: [018_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/4.State_How_to_Change_Your_App/018_-_animals)
+
+- custom css를 하기위해서 `src` 폴더에 CSS 파일을 추가해야함
+- `App.css`와 `AnimalShow.css` 두 개를 `src` 폴더에 추가했음
+- 각 js 파일 내 컴포넌트에 custom style을 적용하기 위해 해당 css 파일을 import 해야함
+  - `className` 속성을 이용해 요소를 특정해야 css 파일에서 selector에 style rule을 적용할 수 있음
+
+   ```js
+   // App.js
+   import './App.css';
+ 
+   function App() {
+     // 생략
+     return (
+       <div className="app">
+         <button onClick={handleClick}>Add Animal</button>
+         <div>{renderedAnimals}</div>
+       </div>
+     );
+   }
+   ``` 
+
+   ```css
+   /* App.css */
+   .app {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+   }
+   ```
+
+
+
+## ▶ 57. Finalizing Styling
+
+> 자료: [019_-_animals](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/4.State_How_to_Change_Your_App/019_-_animals)
+
+- `App.js` 스타일링
+  
+   ```js
+   // App.js
+   import './App.css';
+ 
+   function App() {
+     // 생략
+     return (
+       <div className="app">
+         <button onClick={handleClick}>Add Animal</button>
+         <div className="animal-list">{renderedAnimals}</div>
+       </div>
+     );
+   }
+   ```
+
+   ```css
+   /* App.css */
+   button {
+     background-color: lightgreen;
+     border: 1px solid green;
+     border-radius: 3px;
+     font-size: 20px;
+     padding: 10px;
+     width: 30%;
+   }
+ 
+   .animal-list {
+     display: flex;
+     flex-direction: row;
+     flex-wrap: wrap;
+     justify-content: center;
+   }
+   ```
+
+- `AnimalShow.js` 스타일링
+  
+   ```js
+   // AnimalShow.js
+   import './AnimalShow.css';
+ 
+   function AnimalShow({ type }) {
+     // 생략
+     return (
+       <div className="animal-show" onClick={handleClick}>
+         <img className="animal" alt="animal" src={svgMap[type]} />
+         <img
+           className="heart"
+           alt="heart"
+           src={heart}
+           style={{ width: 10 + 10 * clicks + 'px' }}
+         />
+       </div>
+     );
+   }
+   ```
+
+   ```css
+   /* AnimalShow.css */
+   .animal-show {
+     position: relative;
+     border: 1px solid lightgray;
+     padding: 10px;
+     border-radius: 5px;
+     margin: 10px;
+     box-shadow: 0px 3px 4px lightgray;
+   }
+ 
+   .animal {
+     height: 200px;
+   }
+ 
+   .heart {
+     position: absolute;
+     bottom: 10%;
+     right: 10%;
+   }
+   ```
+
+
+
+## ▶ 58. App Wrapup and Review
+
+> 실습: [58. App Wrapup and Review](https://codesandbox.io/s/58-app-wrapup-and-review-ynqt3z?file=/src/App.js)
+
+- 아래 3가지만 잘 기억하자
+  - Event System: 사용자의 반응(클릭, 드래그 등)에 따라 행동하고 싶을 때 사용
+  - State System: 변하는 데이터를 화면에 게속해서 update 해주고 싶을 때 사용
+  - map() 함수: 비슷한 형태의 요소를 여러 개 만든 후 list로 묶어주고 싶을 때 사용
