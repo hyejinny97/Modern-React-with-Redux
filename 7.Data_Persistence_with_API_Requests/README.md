@@ -450,7 +450,7 @@
 
 1. 언제 arrow function을 호출하는지 이해하기
 2. arrow function의 return 값 이해하기
-3. stale 변수 참조 이해하기
+3. stale variable reference 이해하기
 
 ### 🔹 useEffect에서 function 호출 시점 조절하기
 
