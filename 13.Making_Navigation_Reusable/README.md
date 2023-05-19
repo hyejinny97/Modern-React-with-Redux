@@ -242,3 +242,293 @@
         );
     }
     ```
+
+## ▶ 225. A Link Component
+
+> 자료: [011\_-_nav](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/13._Making_Navigation_Reusable/011_-_nav)
+
+-   user가 our app 내부의 path로 이동할 경우에 사용할 Link component를 생성해보자
+
+    -   만약, user가 our app 내부가 아닌 외부 domain으로 이동할 경우에는 그냥 a 태그를 사용하면 됨
+    -   link를 클릭했을 때, default page refresh되는 것을 막고 url path와 currentState state를 update해야함
+
+    ```js
+    // components/Link.js
+    import { useContext } from "react";
+    import NavigationContext from "../context/navigation";
+
+    function Link({ to, children }) {
+    	const { navigate } = useContext(NavigationContext);
+
+    	const handleClick = (event) => {
+    		event.preventDefault();
+
+    		navigate(to);
+    	};
+
+    	return <a onClick={handleClick}>{children}</a>;
+    }
+
+    export default Link;
+    ```
+
+    ```js
+    import Link from "./components/Link";
+
+    function App() {
+    	return (
+    		<div>
+    			<Link to="/accordion">Go to accordion</Link>
+    			<Link to="/dropdown">Go to dropdown</Link>
+    		</div>
+    	);
+    }
+    ```
+
+## ▶ 226. A Route Component
+
+> 자료: [012\_-_nav](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/13._Making_Navigation_Reusable/012_-_nav)
+
+-   현재 url path가 내가 지정한 path와 동일하면 특정 component를 화면에 render해주는 `Route` component를 생성해보자
+
+    -   `Route` component는 현재 currentPath와 비교할 'path' prop과 화면에 render할 component인 'children' prop을 받게 됨
+
+    ```
+        NavigationProvider → App → Route
+                                 ☝
+                    {path: '/button', children: <ButtonPage />}
+    ```
+
+    ```js
+    // components/Route.js
+    import { useContext } from "react";
+    import NavigationContext from "../context/navigation";
+
+    function Route({ path, children }) {
+    	const { currentPath } = useContext(NavigationContext);
+
+    	if (path === currentPath) {
+    		return children;
+    	}
+
+    	return null;
+    }
+
+    export default Route;
+    ```
+
+    ```js
+    import Route from "./components/Route";
+    import AccordionPage from "./pages/AccordionPage";
+    import DropdownPage from "./pages/DropdownPage";
+
+    function App() {
+    	return (
+    		<div>
+    			<Link to="/accordion">Go to accordion</Link>
+    			<Link to="/dropdown">Go to dropdown</Link>
+    			<div>
+    				<Route path="/accordion">
+    					<AccordionPage />
+    				</Route>
+    				<Route path="/dropdown">
+    					<DropdownPage />
+    				</Route>
+    			</div>
+    		</div>
+    	);
+    }
+    ```
+
+## ▶ 227. Handling Control and Command Keys
+
+> 자료: [013\_-_nav](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/13._Making_Navigation_Reusable/013_-_nav)
+
+-   대게 다른 사이트들을 보면 `ctrl` key(window의 경우)나 `command` key(macOS의 경우)을 누른 채로 link를 클릭하게 되면 새로운 tab이 열리게 됨
+-   우리 프로젝트에서도 Link component에서 ctrl/command key + click event를 handling해보자
+
+    -   ctrl/command key를 누른 채로 link를 click한 후 event 객체를 확인해보면, (window의 경우) `ctrlKey: true`가 되고 (macOS의 경우) `metaKey: true`가 된 것을 확인할 수 있음
+    -   ctrl/command key를 누른 채로 link를 click한 경우, handleClick function이 실행되지 않고 기존 a 태그의 behavior가 실행되도록 하자
+
+    ```js
+    function Link({ to, children }) {
+        ...
+        const handleClick = (event) => {
+            if (event.metaKey || event.ctrlKey) {
+                return;
+            }
+            event.preventDefault();
+
+            navigate(to);
+        };
+
+        return (
+            <a href={to} onClick={handleClick}>
+                {children}
+            </a>
+        );
+    }
+    ```
+
+## ▶ 228. Link Styling
+
+-   Link component를 스타일링해보자
+
+    ```js
+    import classNames from 'classnames';
+
+    function Link({ to, children }) {
+        ...
+        const classes = classNames('text-blue-500');
+        ...
+        return (
+            <a className={classes} href={to} onClick={handleClick}>
+                {children}
+            </a>
+        );
+    }
+    ```
+
+## ▶ 229. Custom Navigation Hook
+
+> 자료: [015\_-_nav](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/13._Making_Navigation_Reusable/015_-_nav)
+
+-   Link component와 Route component에서 중복된 코드인 `useContext(navigationContext)`를 따로 떼어내어 custom hook을 생성해 활용하자
+
+    -   `src` 폴더에 `hooks` 폴더를 생성하고 `use-navigation.js`을 만들자
+
+    ```js
+    // hooks/use-navigation.js
+    import { useContext } from "react";
+    import NavigationContext from "../context/navigation";
+
+    function useNavigation() {
+    	return useContext(NavigationContext);
+    }
+
+    export default useNavigation;
+    ```
+
+    ```js
+    import useNavigation from '../hooks/use-navigation';
+
+    function Link({ to, children }) {
+        const { navigate } = useNavigation();
+        ...
+    }
+    ```
+
+    ```js
+    import useNavigation from '../hooks/use-navigation';
+
+    function Route({ path, children }) {
+        const { currentPath } = useNavigation();
+        ...
+    }
+    ```
+
+## ▶ 230. Adding a Sidebar Component
+
+> 자료: [016\_-_nav](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/13._Making_Navigation_Reusable/016_-_nav)
+
+-   Sidebar component를 만들고 사용해보자
+
+    ```js
+    // components/Sidebar.js
+    import Link from "./Link";
+
+    function Sidebar() {
+    	const links = [
+    		{ label: "Dropdown", path: "/" },
+    		{ label: "Accordion", path: "/accordion" },
+    		{ label: "Buttons", path: "/buttons" },
+    	];
+
+    	const renderedLinks = links.map((link) => {
+    		return (
+    			<Link key={link.label} to={link.path}>
+    				{link.label}
+    			</Link>
+    		);
+    	});
+
+    	return (
+    		<div className="sticky top-0 overflow-y-scroll flex flex-col">
+    			{renderedLinks}
+    		</div>
+    	);
+    }
+
+    export default Sidebar;
+    ```
+
+    ```js
+    import Sidebar from "./components/Sidebar";
+    import ButtonPage from "./pages/ButtonPage";
+
+    function App() {
+    	return (
+    		<div className="container mx-auto grid grid-cols-6 gap-4 mt-4">
+    			<Sidebar />
+    			<div className="col-span-5">
+    				...
+    				<Route path="/buttons">
+    					<ButtonPage />
+    				</Route>
+    			</div>
+    		</div>
+    	);
+    }
+    ```
+
+## ▶ 231. Highlighting the Active Link
+
+> 자료: [017\_-_nav](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/13._Making_Navigation_Reusable/017_-_nav)
+
+-   active link를 따로 스타일링하기 위해서, Link component와 Sidebar component를 수정해보자
+
+    -   Sidebar component는 Link component에 `to`, `className` prop뿐만 아니라 `activeClassName` prop을 전달해 줌
+    -   Link component는 이동해야하는 path인 `to` prop과 `currentPath` state를 비교해 같으면 activeClassName을 기존 className에 덧붙여 줌
+
+    ```js
+    function Sidebar() {
+        ...
+        const renderedLinks = links.map((link) => {
+            return (
+                <Link
+                    key={link.label}
+                    to={link.path}
+                    className="mb-3"
+                    activeClassName="font-bold border-l-4 border-blue-500 pl-2"
+                >
+                    {link.label}
+                </Link>
+                );
+        });
+        ...
+    }
+    ```
+
+    ```js
+    function Link({ to, children, className, activeClassName }) {
+        const { navigate, currentPath } = useNavigation();
+
+        const classes = classNames(
+            'text-blue-500',
+            className,
+            currentPath === to && activeClassName
+        );
+        ...
+    }
+    ```
+
+## ▶ 232. Navigation Wrapup
+
+-   지금까지 우리는 Navigation을 직접 구현하였지만, 실제 현업에서는 navigation libraries를 사용해 구현하게 된다
+
+### 🔹 Popular Navigation Libraries
+
+-   [React-Router](https://reactrouter.com/)
+-   [Wouter](https://github.com/molefrog/wouter)
+-   [React-Location](https://react-location.tanstack.com/)
+-   [Reach-Router](https://reach.tech/router/)
