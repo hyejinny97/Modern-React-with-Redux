@@ -189,7 +189,7 @@
 | :-----------------: | :---------------------------: | :----------------------: | :----------------------: |
 | **simplified name** |          fetchAlbums          |       createAlbum        |       removeAlbum        |
 | **query/mutation**  |             query             |         mutation         |         mutation         |
-|      **path**       |            /albums            |         /albums          |         /albums          |
+|      **path**       |            /albums            |         /albums          |     /albums/albumId      |
 |  **query string**   |        ?userId=userId         |            -             |            -             |
 |     **method**      |              GET              |           POST           |          DELETE          |
 |      **body**       |               -               |     {title, userId}      |            -             |
@@ -507,6 +507,9 @@
 
     -   providesTags나 invalidatesTags properties의 값을 단순히 string 형태의 'Album'가 아닌 unique한 object를 반환하는 function을 만들어보자
     -   이 function은 순서대로 'result, error, argument' 인자를 받게 됨
+        -   result: server로부터 받은 데이터
+        -   error: server로부터 받은 error 객체
+        -   argument: hook을 호출할 때 넣어줬던 인자
 
     ```js
     const albumsApi = createApi({
@@ -527,6 +530,555 @@
               return [{ type: 'Album', id: user.id }];
             },
             query: (user) => {...},
+          }),
+        };
+      },
+    });
+    ```
+
+## ✔ 396. Styling Fixups
+
+> 자료: [015\_-_albums](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/22.Modern_Async_with_Redux_Toolkit_Query/015_-_albums)
+
+-   AlbumsList component 스타일링을 추가하고, 'Add album' 버튼을 클릭했을 때 spinner loader가 나타나게 하자
+
+    ```js
+    function AlbumsList({ user }) {
+      ...
+      const [addAlbum, results] = useAddAlbumMutation();
+      ...
+
+      return (
+        <div>
+          <div className="m-2 flex flex-row items-center justify-between">
+            <h3 className="text-lg font-bold">Albums for {user.name}</h3>
+            <Button loading={results.isLoading} onClick={handleAddAlbum}>
+              + Add Album
+            </Button>
+          </div>
+          <div>{content}</div>
+        </div>
+      );
+    }
+    ```
+
+## ✔ 397. Adding a Pause for Testing
+
+> 자료: [016\_-_albums](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/22.Modern_Async_with_Redux_Toolkit_Query/016_-_albums)
+
+-   spinner loader가 제대로 나타나는지 확인하기 위해, 잠시 requests 결과가 늦게 반환되도록 하자
+
+    -   `fetchFn`: window에서 default request를 override하는 function
+
+    ```js
+    // DEV ONLY!!!
+    const pause = (duration) => {
+      return new Promise((resolve) => {
+        setTimeout(resolve, duration);
+      });
+    };
+
+    const albumsApi = createApi({
+      reducerPath: 'albums',
+      baseQuery: fetchBaseQuery({
+        baseUrl: 'http://localhost:3005',
+        fetchFn: async (...args) => {
+          // REMOVE FOR PRODUCTION
+          await pause(1000);
+          return fetch(...args);
+        },
+      }),
+      ...
+    });
+    ```
+
+## ✔ 398. Refactoring the List
+
+> 자료: [018\_-_albums](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/22.Modern_Async_with_Redux_Toolkit_Query/018_-_albums)
+
+-   AlbumsListItem component를 생성해 AlbumsList component가 ExpandablePanel이 아닌 AlbumsListItem를 사용하도록 하자
+
+    ```js
+    // components/AlbumsListItems.js
+    import { GoTrashcan } from "react-icons/go";
+    import Button from "./Button";
+    import ExpandablePanel from "./ExpandablePanel";
+
+    function AlbumsListItem({ album }) {
+    	const header = (
+    		<div>
+    			<Button>
+    				<GoTrashcan />
+    			</Button>
+    			{album.title}
+    		</div>
+    	);
+
+    	return (
+    		<ExpandablePanel key={album.id} header={header}>
+    			List of photos in the album
+    		</ExpandablePanel>
+    	);
+    }
+
+    export default AlbumsListItem;
+    ```
+
+    ```js
+    import AlbumsListItem from './AlbumsListItem';
+
+    function AlbumsList({ user }) {
+      ...
+
+      let content;
+      if (isLoading) {
+        ...
+      } else if (error) {
+        ...
+      } else {
+        content = data.map((album) => {
+          return <AlbumsListItem key={album.id} album={album} />;
+        });
+      }
+      ...
+    }
+    ```
+
+## ✔ 399. Remove Implementation
+
+> 자료: [019\_-_albums](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/22.Modern_Async_with_Redux_Toolkit_Query/019_-_albums)
+
+-   각 album의 삭제 버튼을 클릭했을 때, 해당 album이 삭제되도록 구현해보자
+
+    -   아직은 tag system을 적용하지 않아서 automatic refetching 작업을 하지 못해 삭제된 album이 화면에 사라지지 않고 남아있음
+
+    ```js
+    const albumsApi = createApi({
+      reducerPath: 'albums',
+      baseQuery: fetchBaseQuery({
+        ...
+      }),
+      endpoints(builder) {
+        return {
+          removeAlbum: builder.mutation({
+            query: (album) => {
+              return {
+                url: `/albums/${album.id}`,
+                method: 'DELETE',
+              };
+            },
+          }),
+          ...
+        };
+      },
+    });
+
+    export const {
+      useFetchAlbumsQuery,
+      useAddAlbumMutation,
+      useRemoveAlbumMutation,
+    } = albumsApi;
+    ```
+
+    ```js
+    // store/index.js
+    ...
+    export {
+      useFetchAlbumsQuery,
+      useAddAlbumMutation,
+      useRemoveAlbumMutation,
+    } from './apis/albumsApi';
+    ```
+
+    ```js
+    import { useRemoveAlbumMutation } from '../store';
+
+    function AlbumsListItem({ album }) {
+      const [removeAlbum, results] = useRemoveAlbumMutation();
+
+      const handleRemoveAlbum = () => {
+        removeAlbum(album);
+      };
+
+      const header = (
+        <>
+          <Button
+            className="mr-2"
+            loading={results.isLoading}
+            onClick={handleRemoveAlbum}
+          >
+            <GoTrashcan />
+          </Button>
+          {album.title}
+        </>
+      );
+      ...
+    }
+    ```
+
+## ✔ 400. Easy Tag Invalidation
+
+> 자료: [020\_-_albums](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/22.Modern_Async_with_Redux_Toolkit_Query/020_-_albums)
+
+-   removeAlbum에 tag system을 도입해서 album 삭제 request가 성공하면 자동으로 해당 user의 albums이 refetch 되도록 하자
+
+    -   아래처럼 album 인자에서 단순히 userId 정보를 받아 작성해도 됨
+
+    ```js
+    const albumsApi = createApi({
+      reducerPath: 'albums',
+      baseQuery: fetchBaseQuery({...}),
+      endpoints(builder) {
+        return {
+          removeAlbum: builder.mutation({
+            invalidatesTags: (result, error, album) => {
+              return [{ type: 'Album', id: album.userId }];
+            },
+            query: (album) => {...},
+          }),
+          ...
+        };
+      },
+    });
+    ```
+
+## ✔ 401. Getting Clever with Cache Tags
+
+> 자료: [021\_-_albums](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/22.Modern_Async_with_Redux_Toolkit_Query/021_-_albums)
+
+-   하지만 만약 인자로 받은 album object에 userId property가 없다면 어떻게 원하는 tags를 invalidate할 수 있을까?
+-   endpoints에서 tags를 작성할 때, userId를 포함한 tag뿐만 아니라 각 album id를 포함한 tags도 만들자
+
+    -   endpoint: fetchAlbums
+    -   argument: {id:1, name:'Myra'}
+    -   result: {data:[{id:30, id:31, id:32}], ...}
+    -   tags: [{type:'Album', id:30}, {type:'Album', id:31}, {type:'Album', id:32}, {type:'UsersAlbums', id:1}]
+    -   나중에 이 많은 tags 중 하나만 invalidate되어도 refetching이 가능함
+
+-   따라서, addAlbum을 한 후에 `{type:'UsersAlbums', id:userId}` tag를 가진 queries이 refetch 되도록 하고, removeAlbum을 한 후에는 `{type:'Album', id:albumId}` tag를 가진 queries이 refetch 되도록 하면 됨
+
+## ✔ 402. More Clever Tag Implementation
+
+> 자료: [022\_-_albums](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/22.Modern_Async_with_Redux_Toolkit_Query/022_-_albums)
+
+-   providesTags, invalidatesTags function을 수정해보자
+
+    ```js
+    const albumsApi = createApi({
+      reducerPath: 'albums',
+      baseQuery: fetchBaseQuery({...}),
+      endpoints(builder) {
+        return {
+          removeAlbum: builder.mutation({
+            invalidatesTags: (result, error, album) => {
+              return [{ type: 'Album', id: album.id }];
+            },
+            query: (album) => {...},
+          }),
+          addAlbum: builder.mutation({
+            invalidatesTags: (result, error, user) => {
+              return [{ type: 'UsersAlbums', id: user.id }];
+            },
+            query: (user) => {...},
+          }),
+          fetchAlbums: builder.query({
+            providesTags: (result, error, user) => {
+              const tags = result.map((album) => {
+                return { type: 'Album', id: album.id };
+              });
+              tags.push({ type: 'UsersAlbums', id: user.id });
+              return tags;
+            },
+            query: (user) => {...},
+          }),
+        };
+      },
+    });
+    ```
+
+-   AlbumsList component에서 album을 추가/삭제할 때 자동으로 refetching이 일어나게 되는데, 이때 몇 초 후에 추가/삭제 결과가 화면에 반영됨
+
+    -   따라서, refetching이 로딩될 때도 skeleton loader를 나타내 사용자들로 하여금 로딩이 진행되고 있음을 알려주자
+    -   `isLoading` 대신 `isFetching`을 활용하면 됨
+
+    ```js
+    function AlbumsList({ user }) {
+      const { data, error, isFetching } = useFetchAlbumsQuery(user);
+      ...
+      let content;
+      if (isFetching) {
+        ...
+      } else if (error) {
+        ...
+      } else {
+        ...
+      }
+      ...
+    }
+    ```
+
+## ✔ 403. Photos Feature Overview
+
+-   photos에 대한 fetch, add, remove 작업은 albums 때와 동일하게 진행됨
+-   단, photos는 JSONServer에 id, image url, album id 형태로 저장됨
+
+## ✔ 404. Lots of Photos Setup!
+
+> 자료: [024\_-_albums](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/22.Modern_Async_with_Redux_Toolkit_Query/024_-_albums)
+
+-   PhotosList, PhotosListItem component를 생성하자
+-   apis 폴더에 photosApi.js 파일을 만들고, reducerPath/baseQuery/endpoints를 작성하자
+
+    ```js
+    import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
+    const photosApi = createApi({
+    	reducerPath: "photos",
+    	baseQuery: fetchBaseQuery({
+    		baseUrl: "http://localhost:3005",
+    	}),
+    	endpoints(builder) {
+    		return {
+    			fetchPhotos: builder.query({}),
+    			addPhoto: builder.mutation({}),
+    			removePhoto: builder.mutation({}),
+    		};
+    	},
+    });
+    ```
+
+## ✔ 405. Adding the Endpoints
+
+-   endpoints를 마저 작성하고, api를 Redux Store와 연결시켜 보자 (store, middleware)
+
+    ```js
+    import { faker } from "@faker-js/faker";
+
+    const photosApi = createApi({
+    	reducerPath: "photos",
+    	baseQuery: fetchBaseQuery({
+    		baseUrl: "http://localhost:3005",
+    	}),
+    	endpoints(builder) {
+    		return {
+    			fetchPhotos: builder.query({
+    				query: (album) => {
+    					return {
+    						url: "/photos",
+    						params: {
+    							albumId: album.id,
+    						},
+    						method: "GET",
+    					};
+    				},
+    			}),
+    			addPhoto: builder.mutation({
+    				query: (album) => {
+    					return {
+    						method: "POST",
+    						url: "/photos",
+    						body: {
+    							albumId: album.id,
+    							url: faker.image.abstract(150, 150, true),
+    						},
+    					};
+    				},
+    			}),
+    			removePhoto: builder.mutation({
+    				query: (photo) => {
+    					return {
+    						method: "DELETE",
+    						url: `/photos/${photo.id}`,
+    					};
+    				},
+    			}),
+    		};
+    	},
+    });
+
+    export const {
+    	useFetchPhotosQuery,
+    	useAddPhotoMutation,
+    	useRemovePhotoMutation,
+    } = photosApi;
+    export { photosApi };
+    ```
+
+    ```js
+    import { photosApi } from './apis/photosApi';
+
+    export const store = configureStore({
+      reducer: {
+        users: usersReducer,
+        [albumsApi.reducerPath]: albumsApi.reducer,
+        [photosApi.reducerPath]: photosApi.reducer,
+      },
+      middleware: (getDefaultMiddleware) => {
+        return getDefaultMiddleware()
+          .concat(albumsApi.middleware)
+          .concat(photosApi.middleware);
+      },
+    });
+
+    setupListeners(store.dispatch);
+
+    ...
+    export {
+      useFetchPhotosQuery,
+      useAddPhotoMutation,
+      useRemovePhotoMutation,
+    } from './apis/photosApi';
+    ```
+
+## ✔ 406. Creating the Photo
+
+> 자료: [026\_-_albums](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/22.Modern_Async_with_Redux_Toolkit_Query/026_-_albums)
+
+-   photosApi에서 자동으로 생성된 hooks를 PhotosList component에서 사용해보자
+-   먼저 'Add photo' 버튼을 클릭했을 때 JSONServer에 photo를 추가하는 것을 먼저 구현해보자
+
+    ```js
+    import { useFetchPhotosQuery, useAddPhotoMutation } from "../store";
+    import Button from "./Button";
+
+    function PhotosList({ album }) {
+    	useFetchPhotosQuery(album);
+    	const [addPhoto, addPhotoResults] = useAddPhotoMutation();
+
+    	const handleAddPhoto = () => {
+    		addPhoto(album);
+    	};
+
+    	return (
+    		<div>
+    			<div className="m-2 flex flex-row items-center justify-between">
+    				<h3 className="text-lg font-bold">
+    					Photos In {album.title}
+    				</h3>
+    				<Button
+    					loading={addPhotoResults.isLoading}
+    					onClick={handleAddPhoto}
+    				>
+    					+ Add Photo
+    				</Button>
+    			</div>
+    		</div>
+    	);
+    }
+    ```
+
+## ✔ 407. Showing the List of Photos
+
+> 자료: [027\_-_albums](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/22.Modern_Async_with_Redux_Toolkit_Query/027_-_albums)
+
+-   fetching한 모든 photos가 화면에 나타나도록 하자
+
+    ```js
+    import Skeleton from './Skeleton';
+    import PhotosListItem from './PhotosListItem';
+
+    function PhotosList({ album }) {
+      const { data, isFetching, error } = useFetchPhotosQuery(album);
+      ...
+
+      let content;
+      if (isFetching) {
+        content = <Skeleton className="h-8 w-8" times={4} />;
+      } else if (error) {
+        content = <div>Error fetching photos...</div>;
+      } else {
+        content = data.map((photo) => {
+          return <PhotosListItem key={photo.id} photo={photo} />;
+        });
+      }
+
+      return (
+        <div>
+          <div className="m-2 flex flex-row items-center justify-between">
+            ...
+          </div>
+          <div>{content}</div>
+        </div>
+      );
+    }
+    ```
+
+    ```js
+    function PhotosListItem({ photo }) {
+    	return (
+    		<div>
+    			<img className="h-20 w-20" src={photo.url} alt="random pic" />
+    		</div>
+    	);
+    }
+    ```
+
+## ✔ 408. Adding Mouse-Over Deletes
+
+> 자료: [028\_-_albums](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/22.Modern_Async_with_Redux_Toolkit_Query/028_-_albums)
+
+-   photo 위에 마우스를 올리면 삭제 버튼이 나타나고, 해당 버튼을 누르면 removePhoto request를 보내게 하자
+
+    ```js
+    import { GoTrashcan } from "react-icons/go";
+    import { useRemovePhotoMutation } from "../store";
+
+    function PhotosListItem({ photo }) {
+    	const [removePhoto] = useRemovePhotoMutation();
+
+    	const handleRemovePhoto = () => {
+    		removePhoto(photo);
+    	};
+
+    	return (
+    		<div
+    			onClick={handleRemovePhoto}
+    			className="relative cursor-pointer m-2"
+    		>
+    			<img className="h-20 w-20" src={photo.url} alt="random pic" />
+    			<div className="absolute inset-0 flex items-center justify-center hover:bg-gray-200 opacity-0 hover:opacity-80">
+    				<GoTrashcan className="text-3xl" />
+    			</div>
+    		</div>
+    	);
+    }
+    ```
+
+## ✔ 409. Adding Automatic Data Refetching
+
+> 자료: [029\_-_albums](https://github.com/hyejinny97/Modern-React-with-Redux/tree/master/22.Modern_Async_with_Redux_Toolkit_Query/029_-_albums)
+
+-   photo를 추가/삭제했을 때 자동으로 해당 album의 photos가 refetching 되게 tag system을 이용해보자
+
+    ```js
+    const photosApi = createApi({
+      reducerPath: 'photos',
+      baseQuery: fetchBaseQuery({
+        baseUrl: 'http://localhost:3005',
+      }),
+      endpoints(builder) {
+        return {
+          fetchPhotos: builder.query({
+            providesTags: (result, error, album) => {
+              const tags = result.map((photo) => {
+                return { type: 'Photo', id: photo.id };
+              });
+              tags.push({ type: 'AlbumPhoto', id: album.id });
+              return tags;
+            },
+            query: (album) => {...},
+          }),
+          addPhoto: builder.mutation({
+            invalidatesTags: (result, error, album) => {
+              return [{ type: 'AlbumPhoto', id: album.id }];
+            },
+            query: (album) => {...},
+          }),
+          removePhoto: builder.mutation({
+            invalidatesTags: (result, error, photo) => {
+              return [{ type: 'Photo', id: photo.id }];
+            },
+            query: (photo) => {...},
           }),
         };
       },
